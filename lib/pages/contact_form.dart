@@ -5,8 +5,13 @@ import '../utils/format_phone.dart';
 
 class ContactFormPage extends StatefulWidget {
   final String? contactId; // Se nulo, é novo contato; se preenchido, edição
+  final ContactService contactService;
 
-  const ContactFormPage({super.key, this.contactId});
+  ContactFormPage({
+    super.key,
+    ContactService? contactService,
+    this.contactId,
+  }) : contactService = contactService ?? ContactService();
 
   @override
   State<ContactFormPage> createState() => _ContactFormPageState();
@@ -33,7 +38,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   Future<void> _loadContact(String id) async {
     try {
-      final contact = await ContactService.getContactById(id);
+      final contact = await widget.contactService.getContactById(id);
       if (!mounted) return;
 
       _nomeController.text = contact['nome'] ?? '';
@@ -61,14 +66,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
     try {
       if (widget.contactId == null) {
         // Novo contato
-        await ContactService.addContact(contactData);
+        await widget.contactService.addContact(contactData);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Contato cadastrado com sucesso!')),
         );
       } else {
         // Edição
-        await ContactService.updateContact(widget.contactId!, contactData);
+        await widget.contactService.updateContact(widget.contactId!, contactData);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Contato atualizado com sucesso!')),
@@ -81,7 +86,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Erro ao salvar contato.')));
+      ).showSnackBar(SnackBar(content: Text('Erro ao salvar contato: $e')));
       // print(e);
     }
   }

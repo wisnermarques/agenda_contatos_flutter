@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import '../services/contact_service.dart';
 
 class ContactListPage extends StatefulWidget {
-  const ContactListPage({super.key});
+  final ContactService contactService;
+
+ ContactListPage({
+    super.key,
+    ContactService? contactService,
+  }) : contactService = contactService ?? ContactService();
 
   @override
   State<ContactListPage> createState() => _ContactListPageState();
@@ -22,7 +27,7 @@ class _ContactListPageState extends State<ContactListPage> {
 
   Future<void> _loadContacts() async {
     try {
-      final contacts = await ContactService.getContacts();
+      final contacts = await widget.contactService.getContacts();
       if (!mounted) return;
       setState(() {
         _contacts = contacts;
@@ -44,7 +49,7 @@ class _ContactListPageState extends State<ContactListPage> {
 
   Future<void> _deleteContact(String id) async {
     try {
-      await ContactService.deleteContact(id);
+      await widget.contactService.deleteContact(id);
       if (!mounted) return;
       _showMessage('Contato excluído com sucesso!');
       _loadContacts();

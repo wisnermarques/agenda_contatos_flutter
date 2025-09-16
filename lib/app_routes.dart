@@ -12,10 +12,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const HomePage());
 
       case '/contatos':
-        return MaterialPageRoute(builder: (_) => const ContactListPage());
+        return MaterialPageRoute(builder: (_) => ContactListPage());
 
       case '/novo':
-        return MaterialPageRoute(builder: (_) => const ContactFormPage());
+        return MaterialPageRoute(builder: (_) => ContactFormPage());
 
       case '/editar':
         // Pega o argumento passado pelo Navigator

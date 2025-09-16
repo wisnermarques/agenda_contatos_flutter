@@ -5,8 +5,13 @@ import '../utils/format_phone.dart';
 
 class EditContactPage extends StatefulWidget {
   final String contactId;
+  final ContactService contactService;
 
-  const EditContactPage({super.key, required this.contactId});
+ EditContactPage({
+    super.key,
+    ContactService? contactService,
+    required this.contactId,
+  }) : contactService = contactService ?? ContactService();
 
   @override
   State<EditContactPage> createState() => _EditContactPageState();
@@ -29,7 +34,7 @@ class _EditContactPageState extends State<EditContactPage> {
 
   Future<void> _loadContact() async {
     try {
-      final contact = await ContactService.getContactById(widget.contactId);
+      final contact = await widget.contactService.getContactById(widget.contactId);
       if (!mounted) return;
 
       _nomeController.text = contact['nome'] ?? '';
@@ -58,7 +63,7 @@ class _EditContactPageState extends State<EditContactPage> {
     };
 
     try {
-      await ContactService.updateContact(widget.contactId, contactData);
+      await widget.contactService.updateContact(widget.contactId, contactData);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Contato atualizado com sucesso!')),
