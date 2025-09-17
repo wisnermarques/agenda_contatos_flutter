@@ -35,7 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.0.0
-  flutter_hooks: ^0.20.0 # opcional p/ estados mais simples
+  flutter_hooks: ^0.20.0 
 
 dev_dependencies:
   flutter_test:

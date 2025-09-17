@@ -6,10 +6,8 @@ import '../services/contact_service.dart';
 class ContactListPage extends StatefulWidget {
   final ContactService contactService;
 
- ContactListPage({
-    super.key,
-    ContactService? contactService,
-  }) : contactService = contactService ?? ContactService();
+  ContactListPage({super.key, ContactService? contactService})
+    : contactService = contactService ?? ContactService();
 
   @override
   State<ContactListPage> createState() => _ContactListPageState();
@@ -42,9 +40,9 @@ class _ContactListPageState extends State<ContactListPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _deleteContact(String id) async {
@@ -91,14 +89,19 @@ class _ContactListPageState extends State<ContactListPage> {
                     elevation: 3,
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       title: Text(
                         contact['nome'] ?? '',
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,11 +142,6 @@ class _ContactListPageState extends State<ContactListPage> {
                 },
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            Navigator.pushNamed(context, '/novo').then((_) => _loadContacts()),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

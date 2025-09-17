@@ -7,11 +7,8 @@ class ContactFormPage extends StatefulWidget {
   final String? contactId; // Se nulo, é novo contato; se preenchido, edição
   final ContactService contactService;
 
-  ContactFormPage({
-    super.key,
-    ContactService? contactService,
-    this.contactId,
-  }) : contactService = contactService ?? ContactService();
+  ContactFormPage({super.key, ContactService? contactService, this.contactId})
+    : contactService = contactService ?? ContactService();
 
   @override
   State<ContactFormPage> createState() => _ContactFormPageState();
@@ -73,7 +70,10 @@ class _ContactFormPageState extends State<ContactFormPage> {
         );
       } else {
         // Edição
-        await widget.contactService.updateContact(widget.contactId!, contactData);
+        await widget.contactService.updateContact(
+          widget.contactId!,
+          contactData,
+        );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Contato atualizado com sucesso!')),
