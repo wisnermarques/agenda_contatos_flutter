@@ -7,7 +7,7 @@ class ContactListPage extends StatefulWidget {
   final ContactService contactService;
 
   ContactListPage({super.key, ContactService? contactService})
-    : contactService = contactService ?? ContactService();
+      : contactService = contactService ?? ContactService();
 
   @override
   State<ContactListPage> createState() => _ContactListPageState();
@@ -34,15 +34,17 @@ class _ContactListPageState extends State<ContactListPage> {
     } catch (error) {
       if (!mounted) return;
       _showMessage('Erro ao carregar contatos.');
-      // print(error);
       setState(() => _loading = false);
     }
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    });
   }
 
   Future<void> _deleteContact(String id) async {
@@ -77,6 +79,13 @@ class _ContactListPageState extends State<ContactListPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Contatos')),
       drawer: AppDrawer(),
+      // 🔹 FAB para adicionar novo contato
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/novo').then((_) => _loadContacts());
+        },
+        child: const Icon(Icons.add),
+      ),
       body: _contacts.isEmpty
           ? const Center(child: Text('Nenhum contato encontrado.'))
           : Padding(

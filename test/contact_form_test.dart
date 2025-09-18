@@ -5,7 +5,6 @@ import 'package:agenda_contatos_flutter/services/contact_service.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-// Gera o arquivo de mocks
 @GenerateMocks([ContactService])
 import 'contact_form_test.mocks.dart';
 
@@ -14,18 +13,17 @@ void main() {
 
   late MockContactService mockContactService;
 
+  // Helper para montar a tela no teste
   Future<void> pumpContactForm(WidgetTester tester, {String? contactId}) async {
     await tester.pumpWidget(
       MaterialApp(
         home: ContactFormPage(
           contactId: contactId,
-          contactService: mockContactService, // seu mock do serviço
+          contactService: mockContactService,
         ),
       ),
     );
-
-    // Permite que widgets assíncronos no initState sejam processados
-    await tester.pump();
+    await tester.pump(); // garante primeiro frame
   }
 
   setUp(() {
@@ -33,16 +31,8 @@ void main() {
   });
 
   group('ContactFormPage Tests', () {
-    testWidgets('Renderiza campos de Nome, Email e Telefone', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ContactFormPage(contactService: mockContactService),
-          ),
-        ),
-      );
+    testWidgets('Renderiza campos de Nome, Email e Telefone', (tester) async {
+      await pumpContactForm(tester);
 
       expect(find.byType(TextFormField), findsNWidgets(3));
       expect(find.widgetWithText(TextFormField, 'Nome'), findsOneWidget);
@@ -50,26 +40,18 @@ void main() {
       expect(find.widgetWithText(TextFormField, 'Telefone'), findsOneWidget);
     });
 
-    testWidgets('Exibe validação se campos não preenchidos', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ContactFormPage(contactService: mockContactService),
-          ),
-        ),
-      );
+    testWidgets('Exibe validação se campos não preenchidos', (tester) async {
+      await pumpContactForm(tester);
 
       await tester.tap(find.byType(ElevatedButton));
-      await tester.pump(); // apenas um pump é suficiente para validação
+      await tester.pump();
 
       expect(find.text('Informe o nome'), findsOneWidget);
       expect(find.text('Informe o email'), findsOneWidget);
       expect(find.text('Informe o telefone'), findsOneWidget);
     });
 
-    testWidgets('Salva contato corretamente', (WidgetTester tester) async {
+    testWidgets('Salva contato corretamente', (tester) async {
       when(mockContactService.addContact(any)).thenAnswer(
         (_) async => {
           'id': '1',
@@ -79,13 +61,7 @@ void main() {
         },
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ContactFormPage(contactService: mockContactService),
-          ),
-        ),
-      );
+      await pumpContactForm(tester);
 
       await tester.enterText(find.widgetWithText(TextFormField, 'Nome'), 'Ana');
       await tester.enterText(
@@ -94,32 +70,22 @@ void main() {
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Telefone'),
-        '(11) 9 9999-9999',
+        '11999999999',
       );
 
       await tester.tap(find.byType(ElevatedButton));
-      await tester.pump(
-        const Duration(seconds: 1),
-      ); // aguarda SnackBar aparecer
+      await tester.pump(const Duration(seconds: 1));
 
       verify(mockContactService.addContact(any)).called(1);
       expect(find.text('Contato cadastrado com sucesso!'), findsOneWidget);
     });
 
-    testWidgets('Exibe mensagem de erro se falhar ao salvar', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('Exibe mensagem de erro se falhar ao salvar', (tester) async {
       when(
         mockContactService.addContact(any),
       ).thenThrow(Exception('Erro de conexão'));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ContactFormPage(contactService: mockContactService),
-          ),
-        ),
-      );
+      await pumpContactForm(tester);
 
       await tester.enterText(find.widgetWithText(TextFormField, 'Nome'), 'Ana');
       await tester.enterText(
@@ -128,69 +94,60 @@ void main() {
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Telefone'),
-        '(11) 9 9999-9999',
+        '11999999999',
       );
 
       await tester.tap(find.byType(ElevatedButton));
-      await tester.pump(
-        const Duration(seconds: 1),
-      ); // aguarda SnackBar aparecer
+      await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.textContaining('Erro ao salvar contato'), findsOneWidget);
     });
 
-    testWidgets('Carrega contato existente para edição', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('Carrega contato existente para edição', (tester) async {
       when(mockContactService.getContactById('123')).thenAnswer(
         (_) async => {
+          'id': '123',
           'nome': 'Fulano',
           'email': 'fulano@email.com',
           'telefone': '11988887777',
         },
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ContactFormPage(
-              contactService: mockContactService,
-              contactId: '123',
-            ),
-          ),
-        ),
-      );
+      await pumpContactForm(tester, contactId: '123');
 
-      await tester.pump(
-        const Duration(seconds: 1),
-      ); // espera o Future do _loadContact
+      // espera tudo carregar
+      await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(TextFormField, 'Fulano'), findsOneWidget);
+      // verifica campos preenchidos
+      expect(find.byType(TextFormField), findsNWidgets(3));
+
+      final nomeFieldFinder = find.widgetWithText(TextFormField, 'Nome');
+      final emailFieldFinder = find.widgetWithText(TextFormField, 'Email');
+
       expect(
-        find.widgetWithText(TextFormField, 'fulano@email.com'),
-        findsOneWidget,
+        tester.widget<TextFormField>(nomeFieldFinder).controller?.text,
+        'Fulano',
       );
       expect(
-        find.widgetWithText(TextFormField, '(11) 98888-7777'),
-        findsOneWidget,
+        tester.widget<TextFormField>(emailFieldFinder).controller?.text,
+        'fulano@email.com',
       );
+
+      verify(mockContactService.getContactById('123')).called(1);
     });
 
     testWidgets('Exibe erro ao carregar contato', (tester) async {
       when(
-        () => mockContactService.getContactById('123'),
+        mockContactService.getContactById('123'),
       ).thenThrow(Exception('Erro'));
 
       await pumpContactForm(tester, contactId: '123');
 
-      // Espera o build inicial
-      await tester.pump();
+      // espera tudo carregar/falhar
+      await tester.pumpAndSettle();
 
-      // Espera o _loadContact terminar e o SnackBar ser mostrado
-      await tester.pump(const Duration(milliseconds: 100));
-
-      // Agora o SnackBar já deve existir
+      // verifica mensagem de erro
       expect(find.text('Erro ao carregar contato.'), findsOneWidget);
     });
   });

@@ -8,7 +8,7 @@ class ContactFormPage extends StatefulWidget {
   final ContactService contactService;
 
   ContactFormPage({super.key, ContactService? contactService, this.contactId})
-    : contactService = contactService ?? ContactService();
+      : contactService = contactService ?? ContactService();
 
   @override
   State<ContactFormPage> createState() => _ContactFormPageState();
@@ -27,7 +27,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
   void initState() {
     super.initState();
     if (widget.contactId != null) {
-      _loadContact(widget.contactId!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadContact(widget.contactId!);
+      });
     } else {
       _loadingData = false;
     }
@@ -46,6 +48,10 @@ class _ContactFormPageState extends State<ContactFormPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erro ao carregar contato.')),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _loadingData = false); // <<< IMPORTANTE
+      }
     }
   }
 
@@ -62,14 +68,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
     try {
       if (widget.contactId == null) {
-        // Novo contato
         await widget.contactService.addContact(contactData);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Contato cadastrado com sucesso!')),
         );
       } else {
-        // Edição
         await widget.contactService.updateContact(
           widget.contactId!,
           contactData,
@@ -81,13 +85,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
       }
 
       if (!mounted) return;
-      Navigator.pop(context, true); // retorna true para atualizar lista
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro ao salvar contato: $e')));
-      // print(e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -131,6 +136,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   // Nome
                   TextFormField(
                     controller: _nomeController,
+                    key: const Key('nomeField'),
                     decoration: const InputDecoration(
                       labelText: 'Nome',
                       prefixIcon: Icon(Icons.person),
@@ -144,6 +150,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   // Email
                   TextFormField(
                     controller: _emailController,
+                    key: const Key('emailField'),
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.email),
@@ -152,7 +159,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Informe o email';
-                      final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      final regex =
+                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                       if (!regex.hasMatch(val)) return 'Email inválido';
                       return null;
                     },
@@ -162,6 +170,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   // Telefone
                   TextFormField(
                     controller: _telefoneController,
+                    key: const Key('telefoneField'),
                     decoration: const InputDecoration(
                       labelText: 'Telefone',
                       prefixIcon: Icon(Icons.phone),
@@ -169,18 +178,17 @@ class _ContactFormPageState extends State<ContactFormPage> {
                     ),
                     keyboardType: TextInputType.phone,
                     maxLength: 15,
-                    validator: (val) => val == null || val.isEmpty
-                        ? 'Informe o telefone'
-                        : null,
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Informe o telefone' : null,
                     onChanged: (val) {
                       final formatted = formatPhone(val);
                       _telefoneController.value = _telefoneController.value
                           .copyWith(
-                            text: formatted,
-                            selection: TextSelection.collapsed(
-                              offset: formatted.length,
-                            ),
-                          );
+                        text: formatted,
+                        selection: TextSelection.collapsed(
+                          offset: formatted.length,
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 24),
@@ -188,6 +196,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
+                      key: const Key('saveButton'),
                       onPressed: _loading ? null : _saveContact,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
